@@ -30,6 +30,9 @@ curl -fsS http://127.0.0.1:18094/v1/run \
 docker compose stop
 ```
 
+`POST /v1/run` returns the common runner envelope with `schema_version`, `run_id`, `module`,
+`output`, and metadata-only `lineage`; the module-specific value is always under `output`.
+
 The service also accepts fully versioned refs such as
 `flow-robot-bridge/observe-state@1.0.0`. Synchronous dataset requests are capped at 2,000 records;
 larger generation belongs to the simulation service's native async job API. Requests have a 2 MiB

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import unquote, urlparse
 
@@ -11,6 +12,23 @@ from .runtime import Runtime
 
 MAX_REQUEST_BYTES = 2 * 1024 * 1024
 RUNTIME = Runtime()
+
+
+def run_envelope(request: dict[str, object], output: dict[str, object]) -> dict[str, object]:
+    requested_run_id = request.get("run_id")
+    if requested_run_id is not None and (
+        not isinstance(requested_run_id, str) or not requested_run_id or len(requested_run_id) > 128
+    ):
+        raise BridgeError(400, "invalid_envelope", "run_id must be a bounded non-empty string")
+    run_id = requested_run_id or str(uuid.uuid4())
+    module = str(request.get("module", ""))
+    return {
+        "schema_version": "1.0.0",
+        "run_id": run_id,
+        "module": module,
+        "output": output,
+        "lineage": {"run_id": run_id, "module": module},
+    }
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -46,7 +64,8 @@ class Handler(BaseHTTPRequestHandler):
             if length < 1 or length > MAX_REQUEST_BYTES:
                 raise BridgeError(413, "request_too_large", "request size is outside allowed bounds")
             payload = json.loads(self.rfile.read(length))
-            self._send(200, RUNTIME.dispatch(payload))
+            output = RUNTIME.dispatch(payload)
+            self._send(200, run_envelope(payload, output))
         except BridgeError as error:
             self._send(error.status, {"error": {"code": error.code, "message": str(error)}})
         except (ValueError, json.JSONDecodeError) as error:
