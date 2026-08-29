@@ -27,6 +27,12 @@ services:
       retries: 10
     networks: [robot-net, proxy]
 
+  test:
+    build:
+      context: .
+      target: test
+    profiles: ["test"]
+
 networks:
   robot-net:
     name: robot-net
