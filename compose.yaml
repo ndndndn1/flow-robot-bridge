@@ -1,0 +1,36 @@
+services:
+  bridge:
+    build: .
+    image: ghcr.io/ndndndn1/flow-robot-bridge:latest
+    restart: "no"
+    user: "10001:10001"
+    read_only: true
+    tmpfs: ["/tmp:size=16m,mode=1777"]
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 128
+    mem_limit: 256m
+    cpus: 1.0
+    environment:
+      PHYSICAL_ROBOT_URL: ${PHYSICAL_ROBOT_URL:-http://physical-robot-interface:8080}
+      SIMULATION_ROBOT_URL: ${SIMULATION_ROBOT_URL:-http://simulation-robot-learning-data:8080}
+      ROBOT_TARGET_MODE: ${ROBOT_TARGET_MODE:-mock}
+      ROBOT_ALLOW_REAL: ${ROBOT_ALLOW_REAL:-false}
+      HTTP_PROXY: http://squid-proxy:3128
+      HTTPS_PROXY: http://squid-proxy:3128
+      NO_PROXY: 127.0.0.1,localhost,physical-robot-interface,simulation-robot-learning-data
+    ports: ["127.0.0.1:${FLOW_ROBOT_BRIDGE_PORT:-18094}:8080"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks: [robot-net, proxy]
+
+networks:
+  robot-net:
+    name: robot-net
+    internal: true
+  proxy:
+    external: true
+    name: proxy-net
