@@ -1,0 +1,30 @@
+[project]
+name = "flow-robot-bridge"
+version = "1.0.0"
+description = "Bounded flow-runner adapters for robot state, safe mock commands, and policy datasets"
+requires-python = ">=3.12"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest==9.0.2", "ruff==0.16.1"]
+
+[project.scripts]
+flow-robot-bridge = "flow_robot_bridge.api:main"
+
+[build-system]
+requires = ["hatchling==1.32.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/flow_robot_bridge"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
