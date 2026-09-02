@@ -3,9 +3,9 @@
   "target": 80,
   "score": 91,
   "categories": [
-    {"id":"functional_contract","max":25,"earned":24,"evidence":["Four versioned flow modules preserve physical and simulation contracts with bounded inputs."]},
-    {"id":"interface_interoperability","max":20,"earned":19,"evidence":["The service advertises runner-compatible schemas and isolates native service URLs from workflow input."]},
-    {"id":"reliability_safety","max":20,"earned":18,"evidence":["Timeouts, payload ceilings, mock-by-default command gating, and bounded synchronous datasets fail closed."]},
+    {"id":"functional_contract","max":25,"earned":24,"evidence":["Eleven versioned modules cover state, commands, synthetic data, BC-RNN jobs, ROS action gateways, and execution intents with bounded inputs."]},
+    {"id":"interface_interoperability","max":20,"earned":19,"evidence":["Runner schemas isolate trusted service URLs and carry artifact references instead of raw RGB-D, point-cloud, or model bytes."]},
+    {"id":"reliability_safety","max":20,"earned":18,"evidence":["Timeouts, payload ceilings, idempotency keys, raw-payload rejection, mock command gating, and bounded synchronous datasets fail closed."]},
     {"id":"verification_performance","max":15,"earned":13,"evidence":["Runtime, catalog, HTTP smoke, benchmark, and bounded soak checks cover every module."]},
     {"id":"security_supply_chain","max":10,"earned":8,"evidence":["Non-root read-only container, no capabilities, internal networking, pinned builder and CI scanning are configured."]},
     {"id":"documentation_usability","max":10,"earned":9,"evidence":["Inputs, outputs, target systems, safe mock workflow, limits, and failure handling are documented."]}

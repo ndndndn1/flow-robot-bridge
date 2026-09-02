@@ -14,6 +14,8 @@ class Runtime:
         self,
         physical: JsonHttpClient | None = None,
         simulation: JsonHttpClient | None = None,
+        embedded: JsonHttpClient | None = None,
+        application: JsonHttpClient | None = None,
         *,
         target_mode: str | None = None,
         allow_real: bool | None = None,
@@ -23,6 +25,12 @@ class Runtime:
         )
         self.simulation = simulation or JsonHttpClient(
             os.getenv("SIMULATION_ROBOT_URL", "http://simulation-robot-learning-data:8080")
+        )
+        self.embedded = embedded or JsonHttpClient(
+            os.getenv("EMBEDDED_ACTION_GATEWAY_URL", "http://embedded-action-gateway:8080")
+        )
+        self.application = application or JsonHttpClient(
+            os.getenv("APPLICATION_ROBOT_URL", "http://application-robot-operations:8080")
         )
         self.target_mode = target_mode or os.getenv("ROBOT_TARGET_MODE", "mock")
         self.allow_real = (
@@ -63,6 +71,53 @@ class Runtime:
             if not isinstance(result, dict):
                 raise BridgeError(502, "invalid_upstream", "simulation result must be an object")
             return result
+        if module_id == "generate-perception-dataset":
+            reject_unknown(value, {"schema_version", "idempotency_key", "scenario_id",
+                                   "asset_set_id", "product_profile", "seed", "backend", "task",
+                                   "episodes", "frames_per_episode", "capture", "randomization"})
+            body, idempotency_key = body_with_idempotency(value)
+            return {"job": self.simulation.post(
+                "/v2/jobs", body, headers={"Idempotency-Key": idempotency_key}
+            )}
+        if module_id == "get-robot-job":
+            reject_unknown(value, {"job_kind", "job_id"})
+            kind = require_choice(value, "job_kind", {"generation", "training", "evaluation"})
+            job_id = require_string(value, "job_id")
+            paths = {
+                "generation": "/v2/jobs/",
+                "training": "/v2/training/jobs/",
+                "evaluation": "/v2/evaluation/jobs/",
+            }
+            return {"job": self.simulation.get(paths[kind] + job_id)}
+        if module_id == "train-imitation-policy":
+            reject_unknown(value, {"idempotency_key", "dataset_id", "sequence_length",
+                                   "hidden_dim", "ridge", "seed"})
+            body, idempotency_key = body_with_idempotency(value)
+            require_string(body, "dataset_id")
+            return {"job": self.simulation.post(
+                "/v2/training/jobs", body, headers={"Idempotency-Key": idempotency_key}
+            )}
+        if module_id == "evaluate-policy":
+            reject_unknown(value, {"idempotency_key", "model_id", "dataset_id",
+                                   "sequence_length"})
+            body, idempotency_key = body_with_idempotency(value)
+            require_string(body, "model_id")
+            require_string(body, "dataset_id")
+            return {"job": self.simulation.post(
+                "/v2/evaluation/jobs", body, headers={"Idempotency-Key": idempotency_key}
+            )}
+        if module_id == "validate-calibration":
+            require_artifact_reference(value, "observation_artifact")
+            reject_binary_fields(value)
+            return {"calibration": self.embedded.post("/v1/actions/calibrate-extrinsics", value)}
+        if module_id == "infer-pose-grasps":
+            require_artifact_reference(value, "frame_bundle")
+            reject_binary_fields(value)
+            return {"perception_result": self.embedded.post("/v1/perception/infer", value)}
+        if module_id == "request-execution-intent":
+            reject_unknown(value, {"schema_version", "intent_id", "result_id", "grasp_id",
+                                   "robot_id", "expected_state_version", "expires_at", "actor"})
+            return {"intent": self.application.post("/api/v2/execution-intents", value)}
         products = self.physical.get("/v1/products")
         robots = self.physical.get("/v1/robots")
         checks = [
@@ -80,6 +135,45 @@ class Runtime:
                 "real_target_disabled",
                 "real robot commands require ROBOT_ALLOW_REAL=true after hardware safety approval",
             )
+
+
+def body_with_idempotency(value: dict[str, Any]) -> tuple[dict[str, Any], str]:
+    body = dict(value)
+    idempotency_key = require_string(body, "idempotency_key")
+    del body["idempotency_key"]
+    return body, idempotency_key
+
+
+def reject_unknown(value: dict[str, Any], allowed: set[str]) -> None:
+    unknown = sorted(set(value) - allowed)
+    if unknown:
+        raise BridgeError(422, "unknown_fields", "unknown fields: " + ", ".join(unknown))
+
+
+def require_choice(value: dict[str, Any], key: str, choices: set[str]) -> str:
+    selected = require_string(value, key)
+    if selected not in choices:
+        raise BridgeError(422, "invalid_choice", f"{key} is not supported")
+    return selected
+
+
+def require_artifact_reference(value: dict[str, Any], key: str) -> None:
+    reference = value.get(key)
+    if not isinstance(reference, dict):
+        raise BridgeError(422, "artifact_reference_required", f"{key} must be an object")
+    reject_unknown(reference, {"artifact_id", "sha256", "media_type"})
+    require_string(reference, "artifact_id")
+    digest = require_string(reference, "sha256")
+    require_string(reference, "media_type")
+    if len(digest) != 64 or any(character not in "0123456789abcdef" for character in digest):
+        raise BridgeError(422, "invalid_digest", f"{key}.sha256 must be lowercase SHA-256")
+
+
+def reject_binary_fields(value: dict[str, Any]) -> None:
+    forbidden = {"rgb", "depth", "image", "pointcloud", "model", "bytes", "data"}
+    found = sorted(forbidden.intersection(value))
+    if found:
+        raise BridgeError(422, "raw_payload_forbidden", "raw payload fields are not accepted")
 
 
 def require_string(value: dict[str, Any], field: str) -> str:

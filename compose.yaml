@@ -14,11 +14,13 @@ services:
     environment:
       PHYSICAL_ROBOT_URL: ${PHYSICAL_ROBOT_URL:-http://physical-robot-interface:8080}
       SIMULATION_ROBOT_URL: ${SIMULATION_ROBOT_URL:-http://simulation-robot-learning-data:8080}
+      EMBEDDED_ACTION_GATEWAY_URL: ${EMBEDDED_ACTION_GATEWAY_URL:-http://embedded-action-gateway:8080}
+      APPLICATION_ROBOT_URL: ${APPLICATION_ROBOT_URL:-http://application-robot-operations:8080}
       ROBOT_TARGET_MODE: ${ROBOT_TARGET_MODE:-mock}
       ROBOT_ALLOW_REAL: ${ROBOT_ALLOW_REAL:-false}
       HTTP_PROXY: http://squid-proxy:3128
       HTTPS_PROXY: http://squid-proxy:3128
-      NO_PROXY: 127.0.0.1,localhost,physical-robot-interface,simulation-robot-learning-data
+      NO_PROXY: 127.0.0.1,localhost,physical-robot-interface,simulation-robot-learning-data,embedded-action-gateway,application-robot-operations
     ports: ["127.0.0.1:${FLOW_ROBOT_BRIDGE_PORT:-18094}:8080"]
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=2)"]

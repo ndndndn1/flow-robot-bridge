@@ -24,19 +24,33 @@ class JsonHttpClient:
     def get(self, path: str) -> Any:
         return self._exchange("GET", path, None)
 
-    def post(self, path: str, body: dict[str, Any]) -> Any:
-        return self._exchange("POST", path, body)
+    def post(
+        self, path: str, body: dict[str, Any], *, headers: dict[str, str] | None = None
+    ) -> Any:
+        return self._exchange("POST", path, body, headers)
+
+    def delete(self, path: str) -> Any:
+        return self._exchange("DELETE", path, None)
 
     def robot_path(self, robot_id: str) -> str:
         return "/v1/robots/" + quote(robot_id, safe="")
 
-    def _exchange(self, method: str, path: str, body: dict[str, Any] | None) -> Any:
+    def _exchange(
+        self,
+        method: str,
+        path: str,
+        body: dict[str, Any] | None,
+        extra_headers: dict[str, str] | None = None,
+    ) -> Any:
         data = None if body is None else json.dumps(body, separators=(",", ":")).encode()
+        headers = {"accept": "application/json", "content-type": "application/json"}
+        if extra_headers:
+            headers.update(extra_headers)
         request = Request(
             self.base_url.rstrip("/") + path,
             method=method,
             data=data,
-            headers={"accept": "application/json", "content-type": "application/json"},
+            headers=headers,
         )
         try:
             with urlopen(request, timeout=self.timeout_seconds) as response:
