@@ -2,12 +2,14 @@
 
 ## Functional and interface contract
 
-- Advertise four versioned modules through `GET /v1/modules` and execute them only through
+- Advertise eleven versioned modules through `GET /v1/modules` and execute them only through
   `POST /v1/run`.
 - Preserve canonical physical command and simulation dataset fields without silently renaming or
   dropping them.
-- Resolve trusted physical and simulation base URLs from deployment configuration, never workflow
-  input.
+- Resolve trusted physical, simulation, embedded action-gateway, and application base URLs from
+  deployment configuration, never workflow input.
+- Carry only artifact references across flow boundaries. Raw camera/point-cloud/model bytes are
+  rejected; the embedded gateway maps fixed routes to documented ROS 2 actions and topics.
 - Reject unknown modules, malformed envelopes, unbounded dataset requests, oversized requests,
   upstream errors, invalid JSON, and unauthorized real targets explicitly.
 
@@ -29,6 +31,9 @@
 | Runner contract | Versioned catalog and run envelope | Catalog and runtime tests |
 | Physical isolation | Deployment-owned URL and canonical command pass-through | Runtime tests |
 | Simulation bounds | 2,000-record synchronous ceiling | Dataset tests |
+| Industrial async jobs | Idempotency-keyed generation, BC-RNN training/evaluation, and status routing | Runtime tests |
+| Perception boundary | Artifact-reference-only calibration and inference calls to fixed trusted endpoints | Runtime raw-payload rejection test |
+| Approved execution | Intent creation goes only to the application control plane; this bridge cannot approve it | Runtime target-routing test |
 | Safe target gate | Mock default plus explicit real enablement | Real-target rejection test |
 | Failure semantics | Status-preserving 4xx and bounded 502 responses | Client/runtime tests |
 | Operational containment | Non-root, read-only, no capabilities, internal network | Compose and runtime inspection |

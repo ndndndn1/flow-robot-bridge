@@ -11,11 +11,24 @@ from workflow input. Deployment-owned environment variables select the trusted s
 | `observe-state` | `physical-robot-interface` | `robot_id` | Canonical `RobotState` |
 | `submit-safe-command` | physical mock or explicitly approved adapter | Canonical physical command | Target mode and `CommandRecord` |
 | `generate-policy-dataset` | `simulation-robot-learning-data` | Bounded scenario request | Dataset manifest plus inline records or artifact metadata |
+| `generate-perception-dataset` | simulation `mock`, MuJoCo, or Isaac worker | Scenario, backend, capture/randomization and idempotency key | Asynchronous dataset job metadata |
+| `get-robot-job` | simulation job service | Job kind and ID | Generation, BC-RNN training, or evaluation job state |
+| `train-imitation-policy` | simulation BC-RNN trainer | Dataset ID and bounded hyperparameters | Asynchronous model job metadata |
+| `evaluate-policy` | simulation policy evaluator | Model ID and dataset ID | Asynchronous metrics job metadata |
+| `validate-calibration` | deployment-owned ROS action gateway | GridFS/MCAP observation reference and TF frame metadata | Calibration action result |
+| `infer-pose-grasps` | deployment-owned ROS perception gateway | Frame-bundle reference and approved calibration/policy identities | 6DoF pose and grasp result |
+| `request-execution-intent` | `application-robot-operations` | Recorded result/grasp, live state version, expiry, actor | Pending auditable intent |
 | `validate-adapter` | physical adapter conformance surface | Empty object | Product/robot inventory and named checks |
 
 The command bridge starts in `mock` mode. Setting `ROBOT_TARGET_MODE=real` is insufficient by
 itself: `ROBOT_ALLOW_REAL=true` is also required after hardware safety approval. A software
 `protective_stop` is not a certified hardware emergency-stop circuit.
+
+Large RGB-D, stereo, LiDAR, MCAP, Zarr, HDF5, model, and checkpoint bytes are never accepted by
+the bridge. Flow inputs carry only bounded IDs, SHA-256 identities, media types, and control
+parameters; storage and transfer stay with simulation/GridFS/model storage. The embedded target is
+an HTTP-to-ROS action gateway owned by the private deployment. It maps only to the documented
+`CalibrateExtrinsics`/perception interfaces and must not expose arbitrary ROS topic or action names.
 
 ## Run
 

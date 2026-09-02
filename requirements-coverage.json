@@ -4,6 +4,9 @@
     {"id":"runner-contract","kind":"required","coverage":"full","evidence":["src/flow_robot_bridge/catalog.py","src/flow_robot_bridge/api.py"],"tests":["tests/test_catalog.py","tests/test_runtime.py"]},
     {"id":"physical-bridge","kind":"required","coverage":"full","evidence":["src/flow_robot_bridge/runtime.py"],"tests":["tests/test_runtime.py"]},
     {"id":"simulation-bridge","kind":"required","coverage":"full","evidence":["src/flow_robot_bridge/runtime.py"],"tests":["tests/test_runtime.py"]},
+    {"id":"industrial-job-bridge","kind":"required","coverage":"full","evidence":["src/flow_robot_bridge/catalog.py","src/flow_robot_bridge/runtime.py"],"tests":["tests/test_catalog.py","tests/test_runtime.py"]},
+    {"id":"perception-reference-boundary","kind":"required","coverage":"full","evidence":["src/flow_robot_bridge/catalog.py","src/flow_robot_bridge/runtime.py"],"tests":["tests/test_runtime.py"]},
+    {"id":"application-intent-bridge","kind":"required","coverage":"full","evidence":["src/flow_robot_bridge/runtime.py"],"tests":["tests/test_runtime.py"]},
     {"id":"mock-first-safety","kind":"required","coverage":"full","evidence":["src/flow_robot_bridge/runtime.py","docs/operations.md"],"tests":["tests/test_runtime.py"]},
     {"id":"bounded-runtime","kind":"required","coverage":"full","evidence":["src/flow_robot_bridge/client.py","src/flow_robot_bridge/api.py","compose.yaml"],"tests":["tests/test_runtime.py","bench/benchmark.py"]},
     {"id":"quality-and-docs","kind":"required","coverage":"full","evidence":["quality/scorecard.json","README.md","docs/enterprise-requirements.md"],"tests":["quality/check_score.py"]}
